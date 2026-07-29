@@ -1,213 +1,102 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Stars, OrbitControls } from "@react-three/drei";
+import { Float, Stars } from "@react-three/drei";
 import * as THREE from "three";
 
-function FloatingCube({
-  position,
-  color,
-  speed,
-}: {
-  position: [number, number, number];
-  color: string;
-  speed: number;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x =
-        state.clock.elapsedTime * speed * 0.5;
-
-      meshRef.current.rotation.y =
-        state.clock.elapsedTime * speed * 0.3;
-    }
-  });
-
-  return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-      <mesh ref={meshRef} position={position}>
-        <boxGeometry args={[1, 1, 1]} />
-
-        <meshStandardMaterial
-          color={color}
-          transparent
-          opacity={0.55}
-          wireframe
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-function FloatingSphere({
-  position,
-  color,
-}: {
-  position: [number, number, number];
-  color: string;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.y =
-        position[1] +
-        Math.sin(state.clock.elapsedTime) * 0.5;
-    }
-  });
-
-  return (
-    <Float speed={1.5} rotationIntensity={0.5} floatIntensity={1.5}>
-      <mesh ref={meshRef} position={position}>
-        <sphereGeometry args={[0.5, 32, 32]} />
-
-        <meshStandardMaterial
-          color={color}
-          transparent
-          opacity={0.35}
-          wireframe
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-function Particles() {
-  const pointsRef = useRef<THREE.Points>(null);
-
-  const count = 500;
+function GalaxyRig() {
+  const rig = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const dust = useRef<THREE.Points>(null);
 
   const positions = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 20;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+    const count = 360;
+    const values = new Float32Array(count * 3);
+    for (let i = 0; i < count; i += 1) {
+      const radius = 2.2 + Math.random() * 5.8;
+      const angle = Math.random() * Math.PI * 2;
+      values[i * 3] = Math.cos(angle) * radius;
+      values[i * 3 + 1] = (Math.random() - 0.5) * 5;
+      values[i * 3 + 2] = Math.sin(angle) * radius - 2;
     }
-
-    return pos;
+    return values;
   }, []);
 
-  useFrame((state) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y =
-        state.clock.elapsedTime * 0.02;
-
-      pointsRef.current.rotation.x =
-        state.clock.elapsedTime * 0.01;
-    }
+  useFrame((state, delta) => {
+    if (!rig.current) return;
+    rig.current.rotation.y = THREE.MathUtils.damp(
+      rig.current.rotation.y,
+      state.pointer.x * 0.18,
+      3.5,
+      delta,
+    );
+    rig.current.rotation.x = THREE.MathUtils.damp(
+      rig.current.rotation.x,
+      -state.pointer.y * 0.11,
+      3.5,
+      delta,
+    );
+    if (ring.current) ring.current.rotation.z += delta * 0.035;
+    if (dust.current) dust.current.rotation.y -= delta * 0.018;
   });
 
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={count}
-          array={positions}
-          itemSize={3}
+    <group ref={rig}>
+      <Float speed={0.7} floatIntensity={0.45} rotationIntensity={0.12}>
+        <mesh ref={ring} position={[2.6, 0.15, -1.8]} rotation={[1.12, 0.2, -0.35]}>
+          <torusGeometry args={[1.55, 0.012, 10, 160]} />
+          <meshBasicMaterial color="#e4b85c" transparent opacity={0.58} />
+        </mesh>
+        <mesh position={[2.6, 0.15, -1.8]}>
+          <icosahedronGeometry args={[0.54, 2]} />
+          <meshBasicMaterial color="#c89a45" wireframe transparent opacity={0.42} />
+        </mesh>
+      </Float>
+
+      <Float speed={0.9} floatIntensity={0.6} rotationIntensity={0.18}>
+        <mesh position={[-3.4, -1.5, -2.5]} rotation={[0.4, 0.7, 0.2]}>
+          <octahedronGeometry args={[0.78, 0]} />
+          <meshBasicMaterial color="#9c783c" wireframe transparent opacity={0.3} />
+        </mesh>
+      </Float>
+
+      <points ref={dust}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[positions, 3]}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color="#e5bd68"
+          size={0.025}
+          transparent
+          opacity={0.58}
+          sizeAttenuation
         />
-      </bufferGeometry>
-
-      <pointsMaterial
-        size={0.03}
-        color="#D4A94D"
-        transparent
-        opacity={0.75}
-        sizeAttenuation
-      />
-    </points>
-  );
-}
-
-function Scene() {
-  return (
-    <>
-      {/* Ambient */}
-      <ambientLight intensity={0.25} />
-
-      {/* Main warm gold light */}
-      <pointLight
-        position={[10, 10, 10]}
-        intensity={1}
-        color="#D4A94D"
-      />
-
-      {/* Secondary soft champagne light */}
-      <pointLight
-        position={[-10, -10, -10]}
-        intensity={0.5}
-        color="#E5C15F"
-      />
-
-      {/* Floating Cubes */}
-      <FloatingCube
-        position={[-3, 1, -2]}
-        color="#D4A94D"
-        speed={1}
-      />
-
-      <FloatingCube
-        position={[3, -1, -3]}
-        color="#BE933D"
-        speed={0.8}
-      />
-
-      <FloatingCube
-        position={[0, 2, -4]}
-        color="#E5C15F"
-        speed={1.2}
-      />
-
-      {/* Floating Spheres */}
-      <FloatingSphere
-        position={[-2, -2, -1]}
-        color="#D4A94D"
-      />
-
-      <FloatingSphere
-        position={[2, 2, -2]}
-        color="#E5C15F"
-      />
-
-      {/* Particles */}
-      <Particles />
-
-      {/* Stars */}
-      <Stars
-        radius={50}
-        depth={50}
-        count={1000}
-        factor={4}
-        saturation={0.3}
-        fade
-        speed={1}
-      />
-    </>
+      </points>
+    </group>
   );
 }
 
 export default function Scene3D() {
   return (
-    <div className="absolute inset-0 z-0">
+    <div className="galaxy-canvas" aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 75 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
+        camera={{ position: [0, 0, 6], fov: 62 }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <Scene />
-
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-          autoRotate
-          autoRotateSpeed={0.5}
-          maxPolarAngle={Math.PI / 1.5}
-          minPolarAngle={Math.PI / 3}
+        <GalaxyRig />
+        <Stars
+          radius={45}
+          depth={32}
+          count={720}
+          factor={2.5}
+          saturation={0.35}
+          fade
+          speed={0.25}
         />
       </Canvas>
     </div>

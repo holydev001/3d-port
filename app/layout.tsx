@@ -10,9 +10,9 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "David Adams | Fullstack Developer",
+  title: "David Adams — Building digital things with intent.",
   description:
-    "Portfolio of David Adams - Fullstack Developer specializing in React, Next.js, Node.js, and modern web technologies.",
+    "The creative portfolio of David Adams, a full-stack developer crafting expressive and useful digital experiences.",
   keywords: [
     "Fullstack Developer",
     "React",
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "David Adams" }],
   openGraph: {
-    title: "David Adams | Fullstack Developer",
+    title: "David Adams — Building digital things with intent.",
     description:
-      "Building digital experiences with innovative design and seamless development.",
+      "Creative full-stack development where engineering, motion, and design meet.",
     type: "website",
   },
 };

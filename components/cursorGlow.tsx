@@ -1,77 +1,63 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
 
 export default function SpaceCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const dotRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!window.matchMedia("(pointer: fine)").matches) return;
 
-  useEffect(() => {
-    const cursor = cursorRef.current;
-    if (!cursor) return;
+    const dot = dotRef.current;
+    const ring = ringRef.current;
+    if (!dot || !ring) return;
 
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-    let cursorX = mouseX;
-    let cursorY = mouseY;
-    let frameId: number;
+    let targetX = -100;
+    let targetY = -100;
+    let ringX = targetX;
+    let ringY = targetY;
+    let frame = 0;
 
-    const move = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+    const move = (event: PointerEvent) => {
+      targetX = event.clientX;
+      targetY = event.clientY;
+      dot.style.transform = `translate3d(${targetX}px,${targetY}px,0)`;
+      document.documentElement.dataset.cursorVisible = "true";
     };
 
-    const updateHoverState = () => {
-      const hovered = document.querySelector(
-        "a:hover, button:hover, input:hover, textarea:hover, select:hover, [data-cursor]:hover"
+    const hover = (event: PointerEvent) => {
+      const interactive = (event.target as Element | null)?.closest(
+        "a, button, input, textarea, [data-cursor]",
       );
-
-      cursor.classList.toggle("is-hovering", !!hovered);
+      ring.classList.toggle("is-active", Boolean(interactive));
     };
 
-    const animate = () => {
-      cursorX += (mouseX - cursorX) * 0.2;
-      cursorY += (mouseY - cursorY) * 0.2;
-
-      cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%)`;
-
-      updateHoverState();
-      frameId = requestAnimationFrame(animate);
+    const tick = () => {
+      ringX += (targetX - ringX) * 0.16;
+      ringY += (targetY - ringY) * 0.16;
+      ring.style.transform = `translate3d(${ringX}px,${ringY}px,0)`;
+      frame = requestAnimationFrame(tick);
     };
 
-    document.documentElement.classList.add("space-cursor-active");
-    window.addEventListener("mousemove", move);
-    animate();
+    document.documentElement.classList.add("has-space-cursor");
+    window.addEventListener("pointermove", move, { passive: true });
+    document.addEventListener("pointerover", hover, { passive: true });
+    tick();
 
     return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener("mousemove", move);
-      document.documentElement.classList.remove("space-cursor-active");
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerover", hover);
+      document.documentElement.classList.remove("has-space-cursor");
+      delete document.documentElement.dataset.cursorVisible;
     };
-  }, [mounted]);
+  }, []);
 
-  if (!mounted) return null;
-
-  return createPortal(
-    <div
-      ref={cursorRef}
-      className="space-cursor pointer-events-none fixed left-0 top-0 hidden md:block"
-      style={{
-        zIndex: 2147483647,
-      }}
-    >
-      <span className="space-cursor__square" />
-      <span className="space-cursor__core" />
-      <span className="space-cursor__line space-cursor__line--top" />
-      <span className="space-cursor__line space-cursor__line--right" />
-      <span className="space-cursor__line space-cursor__line--bottom" />
-      <span className="space-cursor__line space-cursor__line--left" />
-    </div>,
-    document.body
+  return (
+    <>
+      <div ref={ringRef} className="cursor-ring" aria-hidden="true" />
+      <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
+    </>
   );
 }

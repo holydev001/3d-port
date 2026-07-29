@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -28,6 +30,7 @@ const socials = [
 ] as const;
 
 export default function Home() {
+  const pageRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [intro, setIntro] = useState(true);
 
@@ -36,8 +39,79 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useLayoutEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    const ctx = gsap.context(() => {
+      const sections = gsap.utils.toArray<HTMLElement>(".dive-section");
+      sections.forEach((section, index) => {
+        const content = section.querySelector(".dive-content");
+        if (!content) return;
+
+        if (index > 0) {
+          gsap.fromTo(
+            content,
+            {
+              z: 850,
+              scale: 1.5,
+              opacity: 0,
+              rotateX: 16,
+              filter: "blur(22px)",
+            },
+            {
+              z: 0,
+              scale: 1,
+              opacity: 1,
+              rotateX: 0,
+              filter: "blur(0px)",
+              ease: "none",
+              scrollTrigger: {
+                trigger: section,
+                start: "top 92%",
+                end: "top 28%",
+                scrub: 1.15,
+              },
+            },
+          );
+        }
+
+        if (index < sections.length - 1) {
+          gsap.to(content, {
+            z: -980,
+            scale: 0.46,
+            opacity: 0,
+            rotateX: -18,
+            filter: "blur(24px)",
+            ease: "none",
+            scrollTrigger: {
+              trigger: section,
+              start: "55% 45%",
+              end: "bottom top",
+              scrub: 1.15,
+            },
+          });
+        }
+      });
+
+      gsap.utils.toArray<HTMLElement>(".project-row").forEach((row, index) => {
+        gsap.from(row, {
+          x: index % 2 ? 120 : -120,
+          rotateY: index % 2 ? -10 : 10,
+          opacity: 0,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: { trigger: row, start: "top 85%" },
+        });
+      });
+    }, pageRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="site-shell" id="top">
+    <div ref={pageRef} className="site-shell" id="top">
       <div className={`entry-screen ${intro ? "" : "is-gone"}`} aria-hidden="true">
         <div className="entry-orbit" />
         <span>DAVID / HOLY.DEV</span>
@@ -88,7 +162,8 @@ export default function Home() {
       </header>
 
       <main>
-        <section className="hero-section" aria-labelledby="hero-title">
+        <section className="hero-section dive-section" aria-labelledby="hero-title">
+          <div className="dive-content hero-dive-content">
           <div className="hero-kicker reveal">
             <span>Full-stack developer</span>
             <span>Digital craftsman</span>
@@ -114,9 +189,11 @@ export default function Home() {
             <span>CREATIVE PORTFOLIO</span>
             <b>001</b>
           </div>
+          </div>
         </section>
 
-        <section className="manifesto-section" id="about">
+        <section className="manifesto-section dive-section" id="about">
+          <div className="dive-content section-dive-grid">
           <div className="section-label">
             <span>01</span>
             <p>Approach / About</p>
@@ -140,9 +217,11 @@ export default function Home() {
               </p>
             </div>
           </div>
+          </div>
         </section>
 
-        <section className="work-section" id="work">
+        <section className="work-section dive-section" id="work">
+          <div className="dive-content">
           <div className="section-heading">
             <div className="section-label">
               <span>02</span>
@@ -169,9 +248,11 @@ export default function Home() {
               </a>
             ))}
           </div>
+          </div>
         </section>
 
-        <section className="capabilities-section">
+        <section className="capabilities-section dive-section">
+          <div className="dive-content section-dive-grid">
           <div className="section-label">
             <span>03</span>
             <p>Capabilities / Stack</p>
@@ -186,9 +267,11 @@ export default function Home() {
               ))}
             </div>
           </div>
+          </div>
         </section>
 
-        <section className="contact-section" id="contact">
+        <section className="contact-section dive-section" id="contact">
+          <div className="dive-content contact-dive-content">
           <div className="contact-stars" aria-hidden="true">✦ &nbsp; · &nbsp; ✦</div>
           <p>Have an idea with gravity?</p>
           <h2>Let’s make it <em>real.</em></h2>
@@ -196,6 +279,7 @@ export default function Home() {
             Start a conversation
             <Mail size={22} />
           </a>
+          </div>
         </section>
       </main>
 

@@ -1,63 +1,67 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function SpaceCursor() {
-  const dotRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!window.matchMedia("(pointer: fine)").matches) return;
+    const cursor = cursorRef.current;
+    if (!cursor) return;
 
-    const dot = dotRef.current;
-    const ring = ringRef.current;
-    if (!dot || !ring) return;
-
-    let targetX = -100;
-    let targetY = -100;
-    let ringX = targetX;
-    let ringY = targetY;
+    let mouseX = innerWidth / 2;
+    let mouseY = innerHeight / 2;
+    let cursorX = mouseX;
+    let cursorY = mouseY;
     let frame = 0;
 
     const move = (event: PointerEvent) => {
-      targetX = event.clientX;
-      targetY = event.clientY;
-      dot.style.transform = `translate3d(${targetX}px,${targetY}px,0)`;
-      document.documentElement.dataset.cursorVisible = "true";
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+      cursor.classList.add("is-visible");
     };
-
-    const hover = (event: PointerEvent) => {
-      const interactive = (event.target as Element | null)?.closest(
-        "a, button, input, textarea, [data-cursor]",
-      );
-      ring.classList.toggle("is-active", Boolean(interactive));
-    };
-
+    const leave = () => cursor.classList.remove("is-visible");
     const tick = () => {
-      ringX += (targetX - ringX) * 0.16;
-      ringY += (targetY - ringY) * 0.16;
-      ring.style.transform = `translate3d(${ringX}px,${ringY}px,0)`;
+      cursorX += (mouseX - cursorX) * 0.22;
+      cursorY += (mouseY - cursorY) * 0.22;
+      cursor.style.transform = `translate3d(${cursorX}px,${cursorY}px,0) translate(-50%,-50%)`;
+      const interactive = document.querySelector(
+        "a:hover,button:hover,input:hover,textarea:hover,[data-cursor]:hover",
+      );
+      cursor.classList.toggle("is-hovering", Boolean(interactive));
       frame = requestAnimationFrame(tick);
     };
 
-    document.documentElement.classList.add("has-space-cursor");
+    document.documentElement.classList.add("space-cursor-active");
     window.addEventListener("pointermove", move, { passive: true });
-    document.addEventListener("pointerover", hover, { passive: true });
+    document.documentElement.addEventListener("mouseleave", leave);
     tick();
-
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerover", hover);
-      document.documentElement.classList.remove("has-space-cursor");
-      delete document.documentElement.dataset.cursorVisible;
+      document.documentElement.removeEventListener("mouseleave", leave);
+      document.documentElement.classList.remove("space-cursor-active");
     };
-  }, []);
+  }, [mounted]);
 
-  return (
-    <>
-      <div ref={ringRef} className="cursor-ring" aria-hidden="true" />
-      <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
-    </>
+  if (!mounted) return null;
+  return createPortal(
+    <div ref={cursorRef} className="space-cursor" aria-hidden="true">
+      <span className="space-cursor__halo" />
+      <span className="space-cursor__orbit"><i /></span>
+      <span className="space-cursor__diamond" />
+      <span className="space-cursor__core" />
+      <span className="space-cursor__line space-cursor__line--top" />
+      <span className="space-cursor__line space-cursor__line--right" />
+      <span className="space-cursor__line space-cursor__line--bottom" />
+      <span className="space-cursor__line space-cursor__line--left" />
+      <span className="space-cursor__label">LOCK</span>
+    </div>,
+    document.body,
   );
 }

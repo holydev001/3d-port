@@ -46,61 +46,37 @@ export default function Home() {
 
     const ctx = gsap.context(() => {
       const sections = gsap.utils.toArray<HTMLElement>(".dive-section");
-      sections.forEach((section, index) => {
+      sections.forEach((section) => {
         const content = section.querySelector(".dive-content");
         if (!content) return;
 
-        if (index > 0) {
-          gsap.fromTo(
-            content,
-            {
-              z: 850,
-              scale: 1.5,
-              opacity: 0,
-              rotateX: 16,
-              filter: "blur(22px)",
-            },
-            {
-              z: 0,
-              scale: 1,
-              opacity: 1,
-              rotateX: 0,
-              filter: "blur(0px)",
-              ease: "none",
-              scrollTrigger: {
-                trigger: section,
-                start: "top 92%",
-                end: "top 28%",
-                scrub: 1.15,
-              },
-            },
-          );
-        }
-
-        if (index < sections.length - 1) {
-          gsap.to(content, {
-            z: -980,
-            scale: 0.46,
-            opacity: 0,
-            rotateX: -18,
-            filter: "blur(24px)",
+        gsap.fromTo(
+          content,
+          { z: 520, scale: 1.22, opacity: 0, rotateX: 8 },
+          {
+            keyframes: [
+              { z: 0, scale: 1, opacity: 1, rotateX: 0, duration: 0.34 },
+              { z: 0, scale: 1, opacity: 1, rotateX: 0, duration: 0.38 },
+              { z: -620, scale: 0.68, opacity: 0, rotateX: -8, duration: 0.28 },
+            ],
             ease: "none",
             scrollTrigger: {
               trigger: section,
-              start: "55% 45%",
+              start: "top bottom",
               end: "bottom top",
-              scrub: 1.15,
+              scrub: 0.45,
+              invalidateOnRefresh: true,
             },
-          });
-        }
+          },
+        );
       });
 
       gsap.utils.toArray<HTMLElement>(".project-row").forEach((row, index) => {
         gsap.from(row, {
           x: index % 2 ? 120 : -120,
-          rotateY: index % 2 ? -10 : 10,
+          rotateY: index % 2 ? -5 : 5,
           opacity: 0,
-          duration: 1,
+          duration: 0.7,
           ease: "power3.out",
           scrollTrigger: { trigger: row, start: "top 85%" },
         });
@@ -109,6 +85,18 @@ export default function Home() {
 
     return () => ctx.revert();
   }, []);
+
+  const navigateTo = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    if (!href.startsWith("#")) return;
+    event.preventDefault();
+    setMenuOpen(false);
+    const target = document.querySelector(href);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.replaceState(null, "", href);
+  };
 
   return (
     <div ref={pageRef} className="site-shell" id="top">
@@ -125,7 +113,12 @@ export default function Home() {
       <div className="orbital-line orbital-line-two" aria-hidden="true" />
 
       <header className="site-nav">
-        <a className="brand-mark" href="#top" aria-label="Back to top">
+        <a
+          className="brand-mark"
+          href="#top"
+          aria-label="Back to top"
+          onClick={(event) => navigateTo(event, "#top")}
+        >
           <span>H</span>
           <div>
             <strong>HOLY.DEV</strong>
@@ -152,7 +145,7 @@ export default function Home() {
         <nav className={`nav-panel ${menuOpen ? "is-open" : ""}`} aria-label="Primary navigation">
           <div className="nav-panel-meta">Coordinates / 06.5244° N, 3.3792° E</div>
           {navItems.map(([label, href], index) => (
-            <a key={href} href={href} onClick={() => setMenuOpen(false)}>
+            <a key={href} href={href} onClick={(event) => navigateTo(event, href)}>
               <small>0{index + 1}</small>
               <span>{label}</span>
               <ArrowDownRight size={20} />
@@ -179,7 +172,11 @@ export default function Home() {
               I translate complex ideas into sharp, useful digital experiences—
               with code, motion, and just enough cosmic dust.
             </p>
-            <a href="#work" className="orbit-cta">
+            <a
+              href="#work"
+              className="orbit-cta"
+              onClick={(event) => navigateTo(event, "#work")}
+            >
               <span>Explore selected work</span>
               <ArrowDownRight size={22} />
             </a>
@@ -301,7 +298,9 @@ export default function Home() {
         </div>
         <div className="footer-end">
           <span>© {new Date().getFullYear()}</span>
-          <a href="#top">Return to orbit ↑</a>
+          <a href="#top" onClick={(event) => navigateTo(event, "#top")}>
+            Return to orbit ↑
+          </a>
         </div>
       </footer>
     </div>

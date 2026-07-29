@@ -39,8 +39,8 @@ button, input, textarea { font: inherit; }
   content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
   background:radial-gradient(circle at center,transparent 28%,rgba(5,5,7,.28) 68%,rgba(5,5,7,.78) 100%);
 }
-.dive-section { perspective: 1250px; transform-style: preserve-3d; overflow: hidden; }
-.dive-content { position: relative; width: 100%; transform-style: preserve-3d; will-change: transform,opacity,filter; }
+.dive-section { perspective: 1250px; transform-style: preserve-3d; overflow: hidden; scroll-margin-top: 5.75rem; }
+.dive-content { position: relative; width: 100%; transform-style: preserve-3d; will-change: transform,opacity; backface-visibility:hidden; }
 .hero-dive-content { display:flex; flex-direction:column; justify-content:center; min-height:calc(100svh - 13rem); }
 .section-dive-grid { display:grid; grid-template-columns:18vw 1fr; align-items:start; }
 .contact-dive-content { display:flex; flex-direction:column; align-items:center; justify-content:center; }

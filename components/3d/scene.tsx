@@ -1,20 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Stars } from "@react-three/drei";
 import * as THREE from "three";
 
 const GOLD = "#d6a84d";
 
-function StarTunnel() {
+function StarTunnel({ scroll }: { scroll: MutableRefObject<number> }) {
   const tunnel = useRef<THREE.Group>(null);
   const dust = useRef<THREE.Points>(null);
-  const scrollTarget = useRef(0);
-  const scrollSmooth = useRef(0);
 
   const positions = useMemo(() => {
-    const count = 1200;
+    const count = 780;
     const values = new Float32Array(count * 3);
     for (let i = 0; i < count; i += 1) {
       const angle = Math.random() * Math.PI * 2;
@@ -26,27 +24,10 @@ function StarTunnel() {
     return values;
   }, []);
 
-  useEffect(() => {
-    const update = () => {
-      const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-      scrollTarget.current = window.scrollY / max;
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, []);
-
   useFrame((state, delta) => {
-    scrollSmooth.current = THREE.MathUtils.damp(
-      scrollSmooth.current,
-      scrollTarget.current,
-      4.5,
-      delta,
-    );
-    const scroll = scrollSmooth.current;
+    const progress = scroll.current;
     if (tunnel.current) {
-      tunnel.current.rotation.z = scroll * Math.PI * 2.15 + state.pointer.x * 0.08;
-      tunnel.current.position.z = (scroll * 18) % 7;
+      tunnel.current.rotation.z = progress * Math.PI * 1.35 + state.pointer.x * 0.08;
       tunnel.current.position.x = THREE.MathUtils.damp(
         tunnel.current.position.x,
         state.pointer.x * 1.7,
@@ -61,9 +42,9 @@ function StarTunnel() {
       );
     }
     if (dust.current) {
-      dust.current.rotation.z -= delta * (0.018 + scroll * 0.08);
+      dust.current.rotation.z -= delta * (0.015 + progress * 0.035);
       const material = dust.current.material as THREE.PointsMaterial;
-      material.size = 0.032 + scroll * 0.055;
+      material.size = 0.034 + progress * 0.025;
     }
   });
 
@@ -148,53 +129,66 @@ function HeroObjects() {
   );
 }
 
-function CameraFlight() {
+function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
   const { camera } = useThree();
-  const target = useRef({ scroll: 0, x: 0, y: 0 });
+  const lookTarget = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((state, delta) => {
+    const progress = scroll.current;
+    const pointerX = state.pointer.x * 1.35;
+    const pointerY = state.pointer.y * 0.9;
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, pointerX, 4.5, delta);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, pointerY - progress * 0.6, 4.5, delta);
+    camera.position.z = THREE.MathUtils.damp(
+      camera.position.z,
+      6.2 - progress * 43,
+      5,
+      delta,
+    );
+    camera.rotation.z = THREE.MathUtils.damp(
+      camera.rotation.z,
+      -state.pointer.x * 0.025 + Math.sin(progress * Math.PI * 2) * 0.035,
+      4,
+      delta,
+    );
+    lookTarget.set(pointerX * 0.12, pointerY * 0.08, camera.position.z - 7);
+    camera.lookAt(lookTarget);
+  });
+  return null;
+}
+
+function Scene() {
+  const scrollTarget = useRef(0);
+  const scrollSmooth = useRef(0);
 
   useEffect(() => {
     const update = () => {
       const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-      target.current.scroll = window.scrollY / max;
+      scrollTarget.current = window.scrollY / max;
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, []);
 
-  useFrame((state, delta) => {
-    const scroll = target.current.scroll;
-    target.current.x = state.pointer.x * 1.55;
-    target.current.y = state.pointer.y * 1.05;
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, target.current.x, 4.2, delta);
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, target.current.y - scroll * 0.8, 4.2, delta);
-    camera.position.z = THREE.MathUtils.damp(
-      camera.position.z,
-      6.2 - ((scroll * 31) % 7.4),
-      3.2,
+  useFrame((_, delta) => {
+    scrollSmooth.current = THREE.MathUtils.damp(
+      scrollSmooth.current,
+      scrollTarget.current,
+      6,
       delta,
     );
-    camera.rotation.z = THREE.MathUtils.damp(
-      camera.rotation.z,
-      -state.pointer.x * 0.035 + Math.sin(scroll * Math.PI * 4) * 0.06,
-      3.5,
-      delta,
-    );
-    camera.lookAt(0, -scroll * 0.5, -4);
   });
-  return null;
-}
 
-function Scene() {
   return (
     <>
       <ambientLight intensity={0.55} />
       <pointLight position={[6, 4, 5]} intensity={8} color={GOLD} />
       <pointLight position={[-5, -3, 1]} intensity={4} color="#fff1cf" />
-      <StarTunnel />
+      <StarTunnel scroll={scrollSmooth} />
       <HeroObjects />
-      <Stars radius={70} depth={60} count={1900} factor={4.3} saturation={0.2} fade speed={0.7} />
-      <CameraFlight />
+      <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
+      <CameraFlight scroll={scrollSmooth} />
     </>
   );
 }
@@ -204,7 +198,7 @@ export default function Scene3D() {
     <div className="galaxy-canvas" aria-hidden="true">
       <Canvas
         camera={{ position: [0, 0, 6.2], fov: 68 }}
-        dpr={[1, 1.6]}
+        dpr={[1, 1.4]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <Scene />

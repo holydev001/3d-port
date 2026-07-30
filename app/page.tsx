@@ -35,7 +35,7 @@ export default function Home() {
   const [intro, setIntro] = useState(true);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIntro(false), 1150);
+    const timer = window.setTimeout(() => setIntro(false), 1650);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -145,9 +145,30 @@ export default function Home() {
   return (
     <div ref={pageRef} className="site-shell" id="top">
       <div className={`entry-screen ${intro ? "" : "is-gone"}`} aria-hidden="true">
-        <div className="entry-orbit" />
-        <span>DAVID / HOLY.DEV</span>
-        <strong>Entering creative orbit</strong>
+        <div className="entry-stars">
+          {Array.from({ length: 18 }, (_, index) => (
+            <i key={index} style={{ "--star": index } as React.CSSProperties} />
+          ))}
+        </div>
+        <div className="entry-corner entry-corner--tl">06.5244° N</div>
+        <div className="entry-corner entry-corner--tr">SYS / HOLY.DEV</div>
+        <div className="entry-corner entry-corner--bl">DEPTH 000 → 043</div>
+        <div className="entry-corner entry-corner--br">SIGNAL LOCKED</div>
+
+        <div className="entry-gate">
+          <span className="entry-gate__ring entry-gate__ring--outer" />
+          <span className="entry-gate__ring entry-gate__ring--middle" />
+          <span className="entry-gate__ring entry-gate__ring--inner" />
+          <span className="entry-gate__cross entry-gate__cross--x" />
+          <span className="entry-gate__cross entry-gate__cross--y" />
+          <span className="entry-gate__core">H</span>
+        </div>
+
+        <div className="entry-copy">
+          <span>FLIGHT SEQUENCE / 001</span>
+          <strong>Prepare for descent.</strong>
+          <small>Calibrating spatial interface</small>
+        </div>
         <div className="entry-progress"><i /></div>
       </div>
 

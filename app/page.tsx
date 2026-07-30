@@ -49,37 +49,81 @@ export default function Home() {
       sections.forEach((section) => {
         const content = section.querySelector(".dive-content");
         if (!content) return;
-
-        gsap.fromTo(
-          content,
-          { z: 520, scale: 1.22, opacity: 0, rotateX: 8 },
-          {
-            keyframes: [
-              { z: 0, scale: 1, opacity: 1, rotateX: 0, duration: 0.34 },
-              { z: 0, scale: 1, opacity: 1, rotateX: 0, duration: 0.38 },
-              { z: -620, scale: 0.68, opacity: 0, rotateX: -8, duration: 0.28 },
-            ],
-            ease: "none",
-            scrollTrigger: {
-              trigger: section,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 0.45,
-              invalidateOnRefresh: true,
-            },
-          },
+        const items = section.querySelectorAll<HTMLElement>(
+          ".hero-kicker, .hero-title, .hero-lower, .hero-index, .section-label, .eyebrow, h2, .about-grid > *, .project-row, .stack-cloud > *, .contact-stars, .contact-link",
         );
-      });
 
-      gsap.utils.toArray<HTMLElement>(".project-row").forEach((row, index) => {
-        gsap.from(row, {
-          x: index % 2 ? 120 : -120,
-          rotateY: index % 2 ? -5 : 5,
-          opacity: 0,
-          duration: 0.7,
-          ease: "power3.out",
-          scrollTrigger: { trigger: row, start: "top 85%" },
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.42,
+            invalidateOnRefresh: true,
+          },
         });
+
+        timeline
+          .fromTo(
+            content,
+            { z: 760, scale: 1.38, opacity: 0, rotateX: 13 },
+            {
+              z: 0,
+              scale: 1,
+              opacity: 1,
+              rotateX: 0,
+              duration: 0.28,
+              ease: "power2.out",
+            },
+          )
+          .fromTo(
+            items,
+            {
+              y: 90,
+              z: 300,
+              opacity: 0,
+              rotateX: 18,
+              scale: 1.08,
+            },
+            {
+              y: 0,
+              z: 0,
+              opacity: 1,
+              rotateX: 0,
+              scale: 1,
+              stagger: 0.018,
+              duration: 0.22,
+              ease: "power3.out",
+            },
+            0.1,
+          )
+          .to({}, { duration: 0.32 })
+          .to(
+            items,
+            {
+              y: -55,
+              z: -280,
+              opacity: 0,
+              rotateX: -10,
+              scale: 0.92,
+              stagger: 0.01,
+              duration: 0.15,
+              ease: "power2.in",
+            },
+            0.76,
+          )
+          .to(
+            content,
+            {
+              z: -880,
+              scale: 0.56,
+              opacity: 0,
+              rotateX: -14,
+              duration: 0.24,
+              ease: "power2.in",
+            },
+            0.76,
+          );
       });
     }, pageRef);
 

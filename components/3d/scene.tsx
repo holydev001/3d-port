@@ -129,6 +129,139 @@ function HeroObjects() {
   );
 }
 
+function DeepSpaceObjects({ scroll }: { scroll: MutableRefObject<number> }) {
+  const ship = useRef<THREE.Group>(null);
+  const station = useRef<THREE.Group>(null);
+  const engineMaterial = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame((state, delta) => {
+    const progress = scroll.current;
+    const reveal = THREE.MathUtils.smoothstep(progress, 0.66, 0.86);
+
+    if (ship.current) {
+      const scale = THREE.MathUtils.damp(ship.current.scale.x, reveal, 4.5, delta);
+      ship.current.scale.setScalar(scale);
+      ship.current.position.x = 1.9 + Math.sin(state.clock.elapsedTime * 0.38) * 0.35;
+      ship.current.position.y = -0.15 + Math.cos(state.clock.elapsedTime * 0.46) * 0.18;
+      ship.current.rotation.z =
+        -0.22 + Math.sin(state.clock.elapsedTime * 0.32) * 0.08;
+      ship.current.rotation.y =
+        -0.2 + state.pointer.x * 0.11 + Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
+    }
+    if (station.current) {
+      station.current.rotation.z += delta * 0.055;
+      station.current.rotation.y += delta * 0.022;
+    }
+    if (engineMaterial.current) {
+      engineMaterial.current.opacity =
+        0.55 + Math.sin(state.clock.elapsedTime * 9) * 0.2;
+    }
+  });
+
+  return (
+    <>
+      <group ref={station} position={[-3.8, 1.6, -24]} scale={0.78}>
+        <mesh>
+          <torusGeometry args={[1.35, 0.045, 8, 80]} />
+          <meshBasicMaterial color="#d6a84d" transparent opacity={0.5} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.82, 0.025, 8, 64]} />
+          <meshBasicMaterial color="#fff0bd" transparent opacity={0.35} />
+        </mesh>
+        <mesh>
+          <octahedronGeometry args={[0.42, 1]} />
+          <meshStandardMaterial color="#c79742" wireframe transparent opacity={0.7} />
+        </mesh>
+      </group>
+
+      <Float speed={0.55} floatIntensity={0.35} rotationIntensity={0.18}>
+        <mesh position={[4.8, -2.2, -29]}>
+          <dodecahedronGeometry args={[1.45, 2]} />
+          <meshStandardMaterial color="#6d5531" wireframe transparent opacity={0.4} />
+        </mesh>
+      </Float>
+
+      <group
+        ref={ship}
+        position={[1.9, -0.15, -35.2]}
+        rotation={[0.08, -0.2, -0.22]}
+        scale={0.001}
+      >
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.38, 0.62, 2.6, 8]} />
+          <meshStandardMaterial
+            color="#a97d36"
+            emissive="#5a3c13"
+            emissiveIntensity={0.7}
+            metalness={0.82}
+            roughness={0.3}
+          />
+        </mesh>
+        <mesh position={[0, 0, -1.65]} rotation={[-Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[0.39, 1.1, 8]} />
+          <meshStandardMaterial
+            color="#ead59b"
+            emissive="#6c4c19"
+            emissiveIntensity={0.5}
+            metalness={0.7}
+            roughness={0.25}
+          />
+        </mesh>
+        <mesh position={[0, 0.34, -0.78]} rotation={[Math.PI / 2, 0, 0]}>
+          <sphereGeometry args={[0.3, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial
+            color="#261b0e"
+            emissive="#d6a84d"
+            emissiveIntensity={0.9}
+            metalness={0.9}
+            roughness={0.12}
+          />
+        </mesh>
+
+        {[-1, 1].map((side) => (
+          <group key={side} position={[side * 1.18, 0, 0.25]}>
+            <mesh>
+              <boxGeometry args={[1.75, 0.08, 0.82]} />
+              <meshStandardMaterial
+                color="#6d552c"
+                emissive="#2e210b"
+                emissiveIntensity={0.45}
+                metalness={0.75}
+                roughness={0.32}
+              />
+            </mesh>
+            <mesh position={[0, 0.055, 0]}>
+              <planeGeometry args={[1.45, 0.62, 3, 2]} />
+              <meshBasicMaterial color="#e2b353" wireframe transparent opacity={0.75} />
+            </mesh>
+          </group>
+        ))}
+
+        <mesh position={[0, 0, 1.38]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.43, 0.08, 8, 30]} />
+          <meshBasicMaterial
+            ref={engineMaterial}
+            color="#ffd77d"
+            transparent
+            opacity={0.75}
+          />
+        </mesh>
+        <pointLight position={[0, 0, 1.65]} color="#e4aa42" intensity={8} distance={5} />
+
+        <mesh position={[0, 0.74, 0.45]}>
+          <cylinderGeometry args={[0.025, 0.025, 0.85, 8]} />
+          <meshBasicMaterial color="#e5c16f" />
+        </mesh>
+        <mesh position={[0, 1.17, 0.45]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.18, 0.022, 6, 28]} />
+          <meshBasicMaterial color="#f6dfa0" />
+        </mesh>
+      </group>
+    </>
+  );
+}
+
 function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
   const { camera } = useThree();
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
@@ -187,6 +320,7 @@ function Scene() {
       <pointLight position={[-5, -3, 1]} intensity={4} color="#fff1cf" />
       <StarTunnel scroll={scrollSmooth} />
       <HeroObjects />
+      <DeepSpaceObjects scroll={scrollSmooth} />
       <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
       <CameraFlight scroll={scrollSmooth} />
     </>

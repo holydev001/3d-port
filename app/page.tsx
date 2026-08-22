@@ -184,11 +184,8 @@ export default function Home() {
           aria-label="Back to top"
           onClick={(event) => navigateTo(event, "#top")}
         >
-          <span>H</span>
-          <div>
-            <strong>HOLY.DEV</strong>
-            <small>Creative orbit / 2026</small>
-          </div>
+          <div className="brand-wordmark" aria-hidden="true"><span>holy</span><b>dev</b><i>✦</i></div>
+          <small className="brand-caption">Creative orbit / 2026</small>
         </a>
 
         <div className="nav-status">

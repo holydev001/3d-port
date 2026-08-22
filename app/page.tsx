@@ -184,7 +184,7 @@ export default function Home() {
           aria-label="Back to top"
           onClick={(event) => navigateTo(event, "#top")}
         >
-          <div className="brand-wordmark" aria-hidden="true"><span>holy</span><b>dev</b><i>✦</i></div>
+          <div className="brand-wordmark" aria-hidden="true"><span>holy</span><b>dev</b></div>
           <small className="brand-caption">Creative orbit / 2026</small>
         </a>
 
@@ -192,6 +192,15 @@ export default function Home() {
           <i />
           Available for select projects
         </div>
+
+        <nav className="nav-dock" aria-label="Quick navigation">
+          {navItems.map(([label, href], index) => (
+            <a key={href} href={href} onClick={(event) => navigateTo(event, href)}>
+              <small>0{index + 1}</small>
+              <span>{label}</span>
+            </a>
+          ))}
+        </nav>
 
         <button
           className={`menu-trigger ${menuOpen ? "is-open" : ""}`}

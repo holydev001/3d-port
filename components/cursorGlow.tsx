@@ -54,7 +54,7 @@ export default function SpaceCursor() {
     <div ref={cursorRef} className="space-cursor" aria-hidden="true">
       <span className="space-cursor__halo" />
       <span className="space-cursor__orbit"><i /></span>
-      <span className="space-cursor__diamond" />
+      <span className="space-cursor__reticle" />
       <span className="space-cursor__core" />
       <span className="space-cursor__line space-cursor__line--top" />
       <span className="space-cursor__line space-cursor__line--right" />

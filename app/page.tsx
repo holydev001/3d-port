@@ -188,11 +188,6 @@ export default function Home() {
           <small className="brand-caption">Creative orbit / 2026</small>
         </a>
 
-        <div className="nav-status">
-          <i />
-          Available for select projects
-        </div>
-
         <nav className="nav-dock" aria-label="Quick navigation">
           {navItems.map(([label, href], index) => (
             <a key={href} href={href} onClick={(event) => navigateTo(event, href)}>

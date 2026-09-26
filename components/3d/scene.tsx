@@ -129,6 +129,164 @@ function HeroObjects() {
   );
 }
 
+function NebulaField({ scroll }: { scroll: MutableRefObject<number> }) {
+  const cloud = useRef<THREE.Points>(null);
+  const { positions, colors } = useMemo(() => {
+    const count = 460;
+    const values = new Float32Array(count * 3);
+    const shades = new Float32Array(count * 3);
+    const violet = new THREE.Color("#593477");
+    const indigo = new THREE.Color("#2b426c");
+    const gold = new THREE.Color("#b98538");
+
+    for (let i = 0; i < count; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.pow(Math.random(), 0.72) * 8.5;
+      values[i * 3] = Math.cos(angle) * radius * 1.45 + 1.2;
+      values[i * 3 + 1] = Math.sin(angle) * radius * 0.55 - 0.4;
+      values[i * 3 + 2] = -31 - Math.random() * 19;
+
+      const color = i % 9 === 0 ? gold : i % 2 === 0 ? violet : indigo;
+      shades[i * 3] = color.r;
+      shades[i * 3 + 1] = color.g;
+      shades[i * 3 + 2] = color.b;
+    }
+    return { positions: values, colors: shades };
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!cloud.current) return;
+    const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.38, 0.78);
+    cloud.current.rotation.z += delta * 0.008;
+    (cloud.current.material as THREE.PointsMaterial).opacity = 0.06 + reveal * 0.18;
+  });
+
+  return (
+    <points ref={cloud}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        vertexColors
+        size={0.16}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
+
+function AsteroidBelt() {
+  const belt = useRef<THREE.Group>(null);
+  const rocks = useRef<THREE.InstancedMesh>(null);
+  const asteroids = useMemo(
+    () =>
+      Array.from({ length: 92 }, () => {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 3.5 + Math.pow(Math.random(), 0.65) * 3.8;
+        return {
+          position: new THREE.Vector3(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius * 0.43 + 0.1,
+            -23 + (Math.random() - 0.5) * 5.5,
+          ),
+          rotation: new THREE.Euler(Math.random() * 3, Math.random() * 3, Math.random() * 3),
+          scale: 0.035 + Math.random() * 0.09,
+        };
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    if (!rocks.current) return;
+    const dummy = new THREE.Object3D();
+    asteroids.forEach(({ position, rotation, scale }, index) => {
+      dummy.position.copy(position);
+      dummy.rotation.copy(rotation);
+      dummy.scale.setScalar(scale);
+      dummy.updateMatrix();
+      rocks.current?.setMatrixAt(index, dummy.matrix);
+    });
+    rocks.current.instanceMatrix.needsUpdate = true;
+  }, [asteroids]);
+
+  useFrame((state, delta) => {
+    if (!belt.current) return;
+    belt.current.rotation.z += delta * 0.022;
+    belt.current.rotation.y = THREE.MathUtils.damp(
+      belt.current.rotation.y,
+      state.pointer.x * 0.09,
+      2.5,
+      delta,
+    );
+  });
+
+  return (
+    <group ref={belt} rotation={[0.12, 0, -0.14]}>
+      <instancedMesh ref={rocks} args={[undefined, undefined, asteroids.length]}>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#72552c" roughness={0.92} metalness={0.08} />
+      </instancedMesh>
+    </group>
+  );
+}
+
+function PlanetarySystem({ scroll }: { scroll: MutableRefObject<number> }) {
+  const system = useRef<THREE.Group>(null);
+
+  useFrame((state, delta) => {
+    if (!system.current) return;
+    const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.58, 0.84);
+    const scale = THREE.MathUtils.damp(system.current.scale.x, reveal, 4, delta);
+    system.current.scale.setScalar(scale);
+    system.current.rotation.y += delta * 0.025;
+    system.current.rotation.z = THREE.MathUtils.damp(
+      system.current.rotation.z,
+      -0.18 + state.pointer.x * 0.055,
+      2.5,
+      delta,
+    );
+  });
+
+  return (
+    <group ref={system} position={[-1.7, 1.25, -42]} scale={0.001}>
+      <mesh>
+        <sphereGeometry args={[2.25, 40, 40]} />
+        <meshStandardMaterial
+          color="#382354"
+          emissive="#180d2a"
+          emissiveIntensity={0.55}
+          roughness={0.88}
+          metalness={0.14}
+        />
+      </mesh>
+      <mesh scale={1.035}>
+        <sphereGeometry args={[2.25, 32, 32]} />
+        <meshBasicMaterial color="#8b61b0" transparent opacity={0.13} side={THREE.BackSide} />
+      </mesh>
+      <mesh rotation={[1.18, 0.24, -0.36]}>
+        <torusGeometry args={[3.22, 0.035, 8, 96]} />
+        <meshBasicMaterial color="#d6a84d" transparent opacity={0.52} />
+      </mesh>
+      <mesh rotation={[1.18, 0.24, -0.36]}>
+        <torusGeometry args={[2.82, 0.018, 8, 96]} />
+        <meshBasicMaterial color="#e8c168" transparent opacity={0.28} />
+      </mesh>
+      <Float speed={0.7} floatIntensity={0.35} rotationIntensity={0.25}>
+        <mesh position={[3.45, 0.72, 0.15]}>
+          <sphereGeometry args={[0.42, 20, 20]} />
+          <meshStandardMaterial color="#99846e" roughness={1} />
+        </mesh>
+      </Float>
+      <pointLight position={[2.7, 1.8, 3]} color="#ad7fdf" intensity={5} distance={10} />
+    </group>
+  );
+}
+
 function DeepSpaceObjects({ scroll }: { scroll: MutableRefObject<number> }) {
   const ship = useRef<THREE.Group>(null);
   const station = useRef<THREE.Group>(null);
@@ -320,7 +478,10 @@ function Scene() {
       <pointLight position={[-5, -3, 1]} intensity={4} color="#fff1cf" />
       <StarTunnel scroll={scrollSmooth} />
       <HeroObjects />
+      <NebulaField scroll={scrollSmooth} />
+      <AsteroidBelt />
       <DeepSpaceObjects scroll={scrollSmooth} />
+      <PlanetarySystem scroll={scrollSmooth} />
       <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
       <CameraFlight scroll={scrollSmooth} />
     </>

@@ -135,9 +135,9 @@ function NebulaField({ scroll }: { scroll: MutableRefObject<number> }) {
     const count = 460;
     const values = new Float32Array(count * 3);
     const shades = new Float32Array(count * 3);
-    const violet = new THREE.Color("#593477");
-    const indigo = new THREE.Color("#2b426c");
+    const ember = new THREE.Color("#704516");
     const gold = new THREE.Color("#b98538");
+    const ivory = new THREE.Color("#f2d889");
 
     for (let i = 0; i < count; i += 1) {
       const angle = Math.random() * Math.PI * 2;
@@ -146,7 +146,7 @@ function NebulaField({ scroll }: { scroll: MutableRefObject<number> }) {
       values[i * 3 + 1] = Math.sin(angle) * radius * 0.55 - 0.4;
       values[i * 3 + 2] = -31 - Math.random() * 19;
 
-      const color = i % 9 === 0 ? gold : i % 2 === 0 ? violet : indigo;
+      const color = i % 9 === 0 ? ivory : i % 2 === 0 ? gold : ember;
       shades[i * 3] = color.r;
       shades[i * 3 + 1] = color.g;
       shades[i * 3 + 2] = color.b;
@@ -235,54 +235,107 @@ function AsteroidBelt() {
   );
 }
 
-function PlanetarySystem({ scroll }: { scroll: MutableRefObject<number> }) {
-  const system = useRef<THREE.Group>(null);
+function ParticleSun({ scroll }: { scroll: MutableRefObject<number> }) {
+  const sun = useRef<THREE.Group>(null);
+  const surface = useRef<THREE.Points>(null);
+  const corona = useRef<THREE.Points>(null);
+  const { surfacePositions, surfaceColors, coronaPositions } = useMemo(() => {
+    const makePoint = (radius: number, spread = 0) => {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const distance = radius + (Math.random() - 0.5) * spread;
+      return [
+        Math.sin(phi) * Math.cos(theta) * distance,
+        Math.cos(phi) * distance,
+        Math.sin(phi) * Math.sin(theta) * distance,
+      ];
+    };
+
+    const count = 2700;
+    const values = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const coronaValues = new Float32Array(440 * 3);
+    const core = new THREE.Color("#fff3c4");
+    const gold = new THREE.Color("#f2be55");
+    const ember = new THREE.Color("#c78020");
+
+    for (let i = 0; i < count; i += 1) {
+      const [x, y, z] = makePoint(1.72, 0.18);
+      values.set([x, y, z], i * 3);
+      const color = i % 11 === 0 ? core : i % 3 === 0 ? ember : gold;
+      colors.set([color.r, color.g, color.b], i * 3);
+    }
+
+    for (let i = 0; i < 440; i += 1) {
+      const [x, y, z] = makePoint(2.02, 0.78);
+      coronaValues.set([x, y, z], i * 3);
+    }
+
+    return {
+      surfacePositions: values,
+      surfaceColors: colors,
+      coronaPositions: coronaValues,
+    };
+  }, []);
 
   useFrame((state, delta) => {
-    if (!system.current) return;
-    const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.58, 0.84);
-    const scale = THREE.MathUtils.damp(system.current.scale.x, reveal, 4, delta);
-    system.current.scale.setScalar(scale);
-    system.current.rotation.y += delta * 0.025;
-    system.current.rotation.z = THREE.MathUtils.damp(
-      system.current.rotation.z,
-      -0.18 + state.pointer.x * 0.055,
-      2.5,
+    if (!sun.current) return;
+    const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.55, 0.84);
+    const scale = THREE.MathUtils.damp(sun.current.scale.x, reveal, 4.2, delta);
+    const pulse = 1 + Math.sin(state.clock.elapsedTime * 2.4) * 0.035;
+    sun.current.scale.setScalar(scale * pulse);
+    sun.current.rotation.y += delta * 0.055;
+    sun.current.rotation.x = THREE.MathUtils.damp(
+      sun.current.rotation.x,
+      state.pointer.y * 0.1,
+      2.2,
       delta,
     );
+    if (surface.current) {
+      (surface.current.material as THREE.PointsMaterial).size = 0.034 + pulse * 0.009;
+    }
+    if (corona.current) {
+      corona.current.rotation.z -= delta * 0.09;
+      (corona.current.material as THREE.PointsMaterial).opacity = 0.36 + pulse * 0.18;
+    }
   });
 
   return (
-    <group ref={system} position={[-1.7, 1.25, -42]} scale={0.001}>
-      <mesh>
-        <sphereGeometry args={[2.25, 40, 40]} />
-        <meshStandardMaterial
-          color="#382354"
-          emissive="#180d2a"
-          emissiveIntensity={0.55}
-          roughness={0.88}
-          metalness={0.14}
+    <group ref={sun} position={[0, 0.15, -42]} scale={0.001}>
+      <mesh scale={0.93}>
+        <sphereGeometry args={[1.72, 32, 32]} />
+        <meshBasicMaterial color="#d89629" transparent opacity={0.12} />
+      </mesh>
+      <points ref={surface}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[surfacePositions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[surfaceColors, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          vertexColors
+          size={0.042}
+          transparent
+          opacity={0.96}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation
         />
-      </mesh>
-      <mesh scale={1.035}>
-        <sphereGeometry args={[2.25, 32, 32]} />
-        <meshBasicMaterial color="#8b61b0" transparent opacity={0.13} side={THREE.BackSide} />
-      </mesh>
-      <mesh rotation={[1.18, 0.24, -0.36]}>
-        <torusGeometry args={[3.22, 0.035, 8, 96]} />
-        <meshBasicMaterial color="#d6a84d" transparent opacity={0.52} />
-      </mesh>
-      <mesh rotation={[1.18, 0.24, -0.36]}>
-        <torusGeometry args={[2.82, 0.018, 8, 96]} />
-        <meshBasicMaterial color="#e8c168" transparent opacity={0.28} />
-      </mesh>
-      <Float speed={0.7} floatIntensity={0.35} rotationIntensity={0.25}>
-        <mesh position={[3.45, 0.72, 0.15]}>
-          <sphereGeometry args={[0.42, 20, 20]} />
-          <meshStandardMaterial color="#99846e" roughness={1} />
-        </mesh>
-      </Float>
-      <pointLight position={[2.7, 1.8, 3]} color="#ad7fdf" intensity={5} distance={10} />
+      </points>
+      <points ref={corona}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[coronaPositions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          color="#efb547"
+          size={0.028}
+          transparent
+          opacity={0.45}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation
+        />
+      </points>
+      <pointLight color="#f4bb4d" intensity={12} distance={14} />
     </group>
   );
 }
@@ -481,7 +534,7 @@ function Scene() {
       <NebulaField scroll={scrollSmooth} />
       <AsteroidBelt />
       <DeepSpaceObjects scroll={scrollSmooth} />
-      <PlanetarySystem scroll={scrollSmooth} />
+      <ParticleSun scroll={scrollSmooth} />
       <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
       <CameraFlight scroll={scrollSmooth} />
     </>

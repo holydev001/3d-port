@@ -235,7 +235,13 @@ function AsteroidBelt() {
   );
 }
 
-function ParticleSun({ scroll }: { scroll: MutableRefObject<number> }) {
+function ParticleSun({
+  scroll,
+  pointer,
+}: {
+  scroll: MutableRefObject<number>;
+  pointer: MutableRefObject<{ x: number; y: number }>;
+}) {
   const sun = useRef<THREE.Group>(null);
   const surface = useRef<THREE.Points>(null);
   const corona = useRef<THREE.Points>(null);
@@ -280,46 +286,43 @@ function ParticleSun({ scroll }: { scroll: MutableRefObject<number> }) {
 
   useFrame((state, delta) => {
     if (!sun.current) return;
+    const pointerX = pointer.current.x;
+    const pointerY = pointer.current.y;
     const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.62, 0.92);
     const scale = THREE.MathUtils.damp(sun.current.scale.x, reveal * 0.78, 1.8, delta);
-    const pulse = 1 + Math.sin(state.clock.elapsedTime * 2.1) * 0.018;
-    sun.current.scale.setScalar(scale * pulse);
+    sun.current.scale.setScalar(scale);
     sun.current.position.x = THREE.MathUtils.damp(
       sun.current.position.x,
-      -state.pointer.x * 1.05,
+      -pointerX * 1.05,
       5.5,
       delta,
     );
     sun.current.position.y = THREE.MathUtils.damp(
       sun.current.position.y,
-      0.15 - state.pointer.y * 0.62,
+      0.15 - pointerY * 0.62,
       5.5,
       delta,
     );
     sun.current.position.z = THREE.MathUtils.damp(
       sun.current.position.z,
-      -42 - Math.hypot(state.pointer.x, state.pointer.y) * 0.32,
+      -42 - Math.hypot(pointerX, pointerY) * 0.32,
       5.5,
       delta,
     );
     sun.current.rotation.y = THREE.MathUtils.damp(
       sun.current.rotation.y,
-      state.pointer.x * 0.48 + state.clock.elapsedTime * 0.055,
+      pointerX * 0.48 + state.clock.elapsedTime * 0.055,
       4.5,
       delta,
     );
     sun.current.rotation.x = THREE.MathUtils.damp(
       sun.current.rotation.x,
-      -state.pointer.y * 0.32,
+      -pointerY * 0.32,
       4.5,
       delta,
     );
-    if (surface.current) {
-      (surface.current.material as THREE.PointsMaterial).size = 0.034 + pulse * 0.009;
-    }
     if (corona.current) {
       corona.current.rotation.z -= delta * 0.09;
-      (corona.current.material as THREE.PointsMaterial).opacity = 0.36 + pulse * 0.18;
     }
   });
 
@@ -524,7 +527,7 @@ function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
   return null;
 }
 
-function Scene() {
+function Scene({ pointer }: { pointer: MutableRefObject<{ x: number; y: number }> }) {
   const scrollTarget = useRef(0);
   const scrollSmooth = useRef(0);
 
@@ -557,7 +560,7 @@ function Scene() {
       <NebulaField scroll={scrollSmooth} />
       <AsteroidBelt />
       <DeepSpaceObjects scroll={scrollSmooth} />
-      <ParticleSun scroll={scrollSmooth} />
+      <ParticleSun scroll={scrollSmooth} pointer={pointer} />
       <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
       <CameraFlight scroll={scrollSmooth} />
     </>
@@ -565,6 +568,17 @@ function Scene() {
 }
 
 export default function Scene3D() {
+  const pointer = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const updatePointer = (event: PointerEvent) => {
+      pointer.current.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.current.y = -((event.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener("pointermove", updatePointer, { passive: true });
+    return () => window.removeEventListener("pointermove", updatePointer);
+  }, []);
+
   return (
     <div className="galaxy-canvas" aria-hidden="true">
       <Canvas
@@ -572,7 +586,7 @@ export default function Scene3D() {
         dpr={[1, 1.4]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <Scene />
+        <Scene pointer={pointer} />
       </Canvas>
     </div>
   );

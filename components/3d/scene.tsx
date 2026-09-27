@@ -295,34 +295,16 @@ function ParticleSun({
     const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.62, 0.92);
     const scale = THREE.MathUtils.damp(sun.current.scale.x, reveal * 0.78, 1.8, delta);
     sun.current.scale.setScalar(scale);
-    sun.current.position.x = THREE.MathUtils.damp(
-      sun.current.position.x,
-      -pointerX * 1.05,
-      5.5,
-      delta,
-    );
-    sun.current.position.y = THREE.MathUtils.damp(
-      sun.current.position.y,
-      0.15 - pointerY * 0.62,
-      5.5,
-      delta,
-    );
-    sun.current.position.z = THREE.MathUtils.damp(
-      sun.current.position.z,
-      -42 - Math.hypot(pointerX, pointerY) * 0.32,
-      5.5,
-      delta,
-    );
     sun.current.rotation.y = THREE.MathUtils.damp(
       sun.current.rotation.y,
-      pointerX * 0.48 + state.clock.elapsedTime * 0.055,
-      4.5,
+      pointerX * 0.16 + state.clock.elapsedTime * 0.055,
+      2.4,
       delta,
     );
     sun.current.rotation.x = THREE.MathUtils.damp(
       sun.current.rotation.x,
-      -pointerY * 0.32,
-      4.5,
+      -pointerY * 0.1,
+      2.4,
       delta,
     );
     if (surfaceMaterial.current) {
@@ -532,16 +514,27 @@ function DeepSpaceObjects({ scroll }: { scroll: MutableRefObject<number> }) {
   );
 }
 
-function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
+function CameraFlight({
+  scroll,
+  pointer,
+}: {
+  scroll: MutableRefObject<number>;
+  pointer: MutableRefObject<{ x: number; y: number }>;
+}) {
   const { camera } = useThree();
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
+  const solarTarget = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const progress = scroll.current;
-    const pointerX = state.pointer.x * 1.35;
-    const pointerY = state.pointer.y * 0.9;
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, pointerX, 4.5, delta);
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, pointerY - progress * 0.6, 4.5, delta);
+    const pointerX = pointer.current.x;
+    const pointerY = pointer.current.y;
+    const solarInspect = THREE.MathUtils.smoothstep(progress, 0.62, 0.9);
+    const orbitX = pointerX * (1.35 + solarInspect * 0.8);
+    const orbitY = pointerY * (0.9 + solarInspect * 0.35) - progress * 0.6;
+
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, orbitX, 4.5, delta);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, orbitY, 4.5, delta);
     camera.position.z = THREE.MathUtils.damp(
       camera.position.z,
       6.2 - progress * 43,
@@ -550,11 +543,13 @@ function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
     );
     camera.rotation.z = THREE.MathUtils.damp(
       camera.rotation.z,
-      -state.pointer.x * 0.025 + Math.sin(progress * Math.PI * 2) * 0.035,
+      -pointerX * (0.025 + solarInspect * 0.035) + Math.sin(progress * Math.PI * 2) * 0.035,
       4,
       delta,
     );
     lookTarget.set(pointerX * 0.12, pointerY * 0.08, camera.position.z - 7);
+    solarTarget.set(pointerX * 0.08, 0.15 + pointerY * 0.06, -42);
+    lookTarget.lerp(solarTarget, solarInspect);
     camera.lookAt(lookTarget);
   });
   return null;
@@ -595,7 +590,7 @@ function Scene({ pointer }: { pointer: MutableRefObject<{ x: number; y: number }
       <DeepSpaceObjects scroll={scrollSmooth} />
       <ParticleSun scroll={scrollSmooth} pointer={pointer} />
       <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
-      <CameraFlight scroll={scrollSmooth} />
+      <CameraFlight scroll={scrollSmooth} pointer={pointer} />
     </>
   );
 }

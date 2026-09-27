@@ -286,26 +286,32 @@ function ParticleSun({ scroll }: { scroll: MutableRefObject<number> }) {
     sun.current.scale.setScalar(scale * pulse);
     sun.current.position.x = THREE.MathUtils.damp(
       sun.current.position.x,
-      state.pointer.x * 0.42,
-      1.9,
+      -state.pointer.x * 1.05,
+      5.5,
       delta,
     );
     sun.current.position.y = THREE.MathUtils.damp(
       sun.current.position.y,
-      0.15 + state.pointer.y * 0.24,
-      1.9,
+      0.15 - state.pointer.y * 0.62,
+      5.5,
+      delta,
+    );
+    sun.current.position.z = THREE.MathUtils.damp(
+      sun.current.position.z,
+      -42 - Math.hypot(state.pointer.x, state.pointer.y) * 0.32,
+      5.5,
       delta,
     );
     sun.current.rotation.y = THREE.MathUtils.damp(
       sun.current.rotation.y,
-      state.pointer.x * 0.26 + state.clock.elapsedTime * 0.055,
-      1.8,
+      state.pointer.x * 0.48 + state.clock.elapsedTime * 0.055,
+      4.5,
       delta,
     );
     sun.current.rotation.x = THREE.MathUtils.damp(
       sun.current.rotation.x,
-      state.pointer.y * 0.1,
-      2.2,
+      -state.pointer.y * 0.32,
+      4.5,
       delta,
     );
     if (surface.current) {

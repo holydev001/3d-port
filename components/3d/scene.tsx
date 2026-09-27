@@ -243,8 +243,12 @@ function ParticleSun({
   pointer: MutableRefObject<{ x: number; y: number }>;
 }) {
   const sun = useRef<THREE.Group>(null);
-  const surface = useRef<THREE.Points>(null);
+  const surfaceMaterial = useRef<THREE.ShaderMaterial>(null);
   const corona = useRef<THREE.Points>(null);
+  const sunUniforms = useMemo(
+    () => ({ uTime: { value: 0 } }),
+    [],
+  );
   const { surfacePositions, surfaceColors, coronaPositions } = useMemo(() => {
     const makePoint = (radius: number, spread = 0) => {
       const theta = Math.random() * Math.PI * 2;
@@ -321,8 +325,12 @@ function ParticleSun({
       4.5,
       delta,
     );
+    if (surfaceMaterial.current) {
+      surfaceMaterial.current.uniforms.uTime.value = state.clock.elapsedTime;
+    }
     if (corona.current) {
-      corona.current.rotation.z -= delta * 0.09;
+      corona.current.rotation.z -= delta * 0.14;
+      corona.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.45) * 0.12;
     }
   });
 
@@ -332,19 +340,44 @@ function ParticleSun({
         <sphereGeometry args={[1.72, 32, 32]} />
         <meshBasicMaterial color="#d89629" transparent opacity={0.12} />
       </mesh>
-      <points ref={surface}>
+      <points>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[surfacePositions, 3]} />
           <bufferAttribute attach="attributes-color" args={[surfaceColors, 3]} />
         </bufferGeometry>
-        <pointsMaterial
-          vertexColors
-          size={0.042}
+        <shaderMaterial
+          ref={surfaceMaterial}
+          uniforms={sunUniforms}
           transparent
-          opacity={0.96}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
-          sizeAttenuation
+          vertexShader={`
+            attribute vec3 color;
+            uniform float uTime;
+            varying vec3 vColor;
+
+            void main() {
+              vColor = color;
+              float seed = dot(position, vec3(12.9898, 78.233, 37.719));
+              float ripple = sin(seed + uTime * 1.35) * 0.028;
+              ripple += sin(position.y * 7.0 - uTime * 0.8) * 0.018;
+              vec3 animatedPosition = position + normalize(position) * ripple;
+              vec4 mvPosition = modelViewMatrix * vec4(animatedPosition, 1.0);
+              gl_Position = projectionMatrix * mvPosition;
+              float depthScale = clamp(14.0 / -mvPosition.z, 0.4, 1.65);
+              gl_PointSize = (3.1 + fract(seed) * 1.6) * depthScale;
+            }
+          `}
+          fragmentShader={`
+            varying vec3 vColor;
+
+            void main() {
+              float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
+              if (distanceFromCenter > 0.5) discard;
+              float glow = smoothstep(0.5, 0.06, distanceFromCenter);
+              gl_FragColor = vec4(vColor, glow * 0.94);
+            }
+          `}
         />
       </points>
       <points ref={corona}>

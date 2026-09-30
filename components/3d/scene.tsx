@@ -129,6 +129,258 @@ function HeroObjects() {
   );
 }
 
+function NebulaField({ scroll }: { scroll: MutableRefObject<number> }) {
+  const cloud = useRef<THREE.Points>(null);
+  const { positions, colors } = useMemo(() => {
+    const count = 460;
+    const values = new Float32Array(count * 3);
+    const shades = new Float32Array(count * 3);
+    const ember = new THREE.Color("#704516");
+    const gold = new THREE.Color("#b98538");
+    const ivory = new THREE.Color("#f2d889");
+
+    for (let i = 0; i < count; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.pow(Math.random(), 0.72) * 8.5;
+      values[i * 3] = Math.cos(angle) * radius * 1.45 + 1.2;
+      values[i * 3 + 1] = Math.sin(angle) * radius * 0.55 - 0.4;
+      values[i * 3 + 2] = -31 - Math.random() * 19;
+
+      const color = i % 9 === 0 ? ivory : i % 2 === 0 ? gold : ember;
+      shades[i * 3] = color.r;
+      shades[i * 3 + 1] = color.g;
+      shades[i * 3 + 2] = color.b;
+    }
+    return { positions: values, colors: shades };
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!cloud.current) return;
+    const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.38, 0.78);
+    cloud.current.rotation.z += delta * 0.008;
+    (cloud.current.material as THREE.PointsMaterial).opacity = 0.06 + reveal * 0.18;
+  });
+
+  return (
+    <points ref={cloud}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        vertexColors
+        size={0.16}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
+
+function AsteroidBelt() {
+  const belt = useRef<THREE.Group>(null);
+  const rocks = useRef<THREE.InstancedMesh>(null);
+  const asteroids = useMemo(
+    () =>
+      Array.from({ length: 92 }, () => {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 3.5 + Math.pow(Math.random(), 0.65) * 3.8;
+        return {
+          position: new THREE.Vector3(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius * 0.43 + 0.1,
+            -23 + (Math.random() - 0.5) * 5.5,
+          ),
+          rotation: new THREE.Euler(Math.random() * 3, Math.random() * 3, Math.random() * 3),
+          scale: 0.035 + Math.random() * 0.09,
+        };
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    if (!rocks.current) return;
+    const dummy = new THREE.Object3D();
+    asteroids.forEach(({ position, rotation, scale }, index) => {
+      dummy.position.copy(position);
+      dummy.rotation.copy(rotation);
+      dummy.scale.setScalar(scale);
+      dummy.updateMatrix();
+      rocks.current?.setMatrixAt(index, dummy.matrix);
+    });
+    rocks.current.instanceMatrix.needsUpdate = true;
+  }, [asteroids]);
+
+  useFrame((state, delta) => {
+    if (!belt.current) return;
+    belt.current.rotation.z += delta * 0.022;
+    belt.current.rotation.y = THREE.MathUtils.damp(
+      belt.current.rotation.y,
+      state.pointer.x * 0.09,
+      2.5,
+      delta,
+    );
+  });
+
+  return (
+    <group ref={belt} rotation={[0.12, 0, -0.14]}>
+      <instancedMesh ref={rocks} args={[undefined, undefined, asteroids.length]}>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#72552c" roughness={0.92} metalness={0.08} />
+      </instancedMesh>
+    </group>
+  );
+}
+
+function ParticleSun({
+  scroll,
+  pointer,
+}: {
+  scroll: MutableRefObject<number>;
+  pointer: MutableRefObject<{ x: number; y: number }>;
+}) {
+  const sun = useRef<THREE.Group>(null);
+  const surfaceMaterial = useRef<THREE.ShaderMaterial>(null);
+  const corona = useRef<THREE.Points>(null);
+  const sunUniforms = useMemo(
+    () => ({ uTime: { value: 0 } }),
+    [],
+  );
+  const { surfacePositions, surfaceColors, coronaPositions } = useMemo(() => {
+    const makePoint = (radius: number, spread = 0) => {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const distance = radius + (Math.random() - 0.5) * spread;
+      return [
+        Math.sin(phi) * Math.cos(theta) * distance,
+        Math.cos(phi) * distance,
+        Math.sin(phi) * Math.sin(theta) * distance,
+      ];
+    };
+
+    const count = 2700;
+    const values = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const coronaValues = new Float32Array(440 * 3);
+    const core = new THREE.Color("#fff3c4");
+    const gold = new THREE.Color("#f2be55");
+    const ember = new THREE.Color("#c78020");
+
+    for (let i = 0; i < count; i += 1) {
+      const [x, y, z] = makePoint(1.72, 0.18);
+      values.set([x, y, z], i * 3);
+      const color = i % 11 === 0 ? core : i % 3 === 0 ? ember : gold;
+      colors.set([color.r, color.g, color.b], i * 3);
+    }
+
+    for (let i = 0; i < 440; i += 1) {
+      const [x, y, z] = makePoint(2.02, 0.78);
+      coronaValues.set([x, y, z], i * 3);
+    }
+
+    return {
+      surfacePositions: values,
+      surfaceColors: colors,
+      coronaPositions: coronaValues,
+    };
+  }, []);
+
+  useFrame((state, delta) => {
+    if (!sun.current) return;
+    const pointerX = pointer.current.x;
+    const pointerY = pointer.current.y;
+    const reveal = THREE.MathUtils.smoothstep(scroll.current, 0.62, 0.92);
+    const scale = THREE.MathUtils.damp(sun.current.scale.x, reveal * 0.78, 1.8, delta);
+    sun.current.scale.setScalar(scale);
+    sun.current.rotation.y = THREE.MathUtils.damp(
+      sun.current.rotation.y,
+      pointerX * 0.16 + state.clock.elapsedTime * 0.055,
+      2.4,
+      delta,
+    );
+    sun.current.rotation.x = THREE.MathUtils.damp(
+      sun.current.rotation.x,
+      -pointerY * 0.1,
+      2.4,
+      delta,
+    );
+    if (surfaceMaterial.current) {
+      surfaceMaterial.current.uniforms.uTime.value = state.clock.elapsedTime;
+    }
+    if (corona.current) {
+      corona.current.rotation.z -= delta * 0.14;
+      corona.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.45) * 0.12;
+    }
+  });
+
+  return (
+    <group ref={sun} position={[0, 0.15, -42]} scale={0.001}>
+      <mesh scale={0.93}>
+        <sphereGeometry args={[1.72, 32, 32]} />
+        <meshBasicMaterial color="#d89629" transparent opacity={0.12} />
+      </mesh>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[surfacePositions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[surfaceColors, 3]} />
+        </bufferGeometry>
+        <shaderMaterial
+          ref={surfaceMaterial}
+          uniforms={sunUniforms}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          vertexShader={`
+            attribute vec3 color;
+            uniform float uTime;
+            varying vec3 vColor;
+
+            void main() {
+              vColor = color;
+              float seed = dot(position, vec3(12.9898, 78.233, 37.719));
+              float ripple = sin(seed + uTime * 1.35) * 0.028;
+              ripple += sin(position.y * 7.0 - uTime * 0.8) * 0.018;
+              vec3 animatedPosition = position + normalize(position) * ripple;
+              vec4 mvPosition = modelViewMatrix * vec4(animatedPosition, 1.0);
+              gl_Position = projectionMatrix * mvPosition;
+              float depthScale = clamp(14.0 / -mvPosition.z, 0.4, 1.65);
+              gl_PointSize = (3.1 + fract(seed) * 1.6) * depthScale;
+            }
+          `}
+          fragmentShader={`
+            varying vec3 vColor;
+
+            void main() {
+              float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
+              if (distanceFromCenter > 0.5) discard;
+              float glow = smoothstep(0.5, 0.06, distanceFromCenter);
+              gl_FragColor = vec4(vColor, glow * 0.94);
+            }
+          `}
+        />
+      </points>
+      <points ref={corona}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[coronaPositions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          color="#efb547"
+          size={0.028}
+          transparent
+          opacity={0.45}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation
+        />
+      </points>
+      <pointLight color="#f4bb4d" intensity={12} distance={14} />
+    </group>
+  );
+}
+
 function DeepSpaceObjects({ scroll }: { scroll: MutableRefObject<number> }) {
   const ship = useRef<THREE.Group>(null);
   const station = useRef<THREE.Group>(null);
@@ -262,16 +514,27 @@ function DeepSpaceObjects({ scroll }: { scroll: MutableRefObject<number> }) {
   );
 }
 
-function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
+function CameraFlight({
+  scroll,
+  pointer,
+}: {
+  scroll: MutableRefObject<number>;
+  pointer: MutableRefObject<{ x: number; y: number }>;
+}) {
   const { camera } = useThree();
   const lookTarget = useMemo(() => new THREE.Vector3(), []);
+  const solarTarget = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const progress = scroll.current;
-    const pointerX = state.pointer.x * 1.35;
-    const pointerY = state.pointer.y * 0.9;
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, pointerX, 4.5, delta);
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, pointerY - progress * 0.6, 4.5, delta);
+    const pointerX = pointer.current.x;
+    const pointerY = pointer.current.y;
+    const solarInspect = THREE.MathUtils.smoothstep(progress, 0.62, 0.9);
+    const orbitX = pointerX * (1.35 + solarInspect * 0.8);
+    const orbitY = pointerY * (0.9 + solarInspect * 0.35) - progress * 0.6;
+
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, orbitX, 4.5, delta);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, orbitY, 4.5, delta);
     camera.position.z = THREE.MathUtils.damp(
       camera.position.z,
       6.2 - progress * 43,
@@ -280,17 +543,19 @@ function CameraFlight({ scroll }: { scroll: MutableRefObject<number> }) {
     );
     camera.rotation.z = THREE.MathUtils.damp(
       camera.rotation.z,
-      -state.pointer.x * 0.025 + Math.sin(progress * Math.PI * 2) * 0.035,
+      -pointerX * (0.025 + solarInspect * 0.035) + Math.sin(progress * Math.PI * 2) * 0.035,
       4,
       delta,
     );
     lookTarget.set(pointerX * 0.12, pointerY * 0.08, camera.position.z - 7);
+    solarTarget.set(pointerX * 0.08, 0.15 + pointerY * 0.06, -42);
+    lookTarget.lerp(solarTarget, solarInspect);
     camera.lookAt(lookTarget);
   });
   return null;
 }
 
-function Scene() {
+function Scene({ pointer }: { pointer: MutableRefObject<{ x: number; y: number }> }) {
   const scrollTarget = useRef(0);
   const scrollSmooth = useRef(0);
 
@@ -320,14 +585,28 @@ function Scene() {
       <pointLight position={[-5, -3, 1]} intensity={4} color="#fff1cf" />
       <StarTunnel scroll={scrollSmooth} />
       <HeroObjects />
+      <NebulaField scroll={scrollSmooth} />
+      <AsteroidBelt />
       <DeepSpaceObjects scroll={scrollSmooth} />
+      <ParticleSun scroll={scrollSmooth} pointer={pointer} />
       <Stars radius={70} depth={60} count={1250} factor={4} saturation={0.2} fade speed={0.55} />
-      <CameraFlight scroll={scrollSmooth} />
+      <CameraFlight scroll={scrollSmooth} pointer={pointer} />
     </>
   );
 }
 
 export default function Scene3D() {
+  const pointer = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const updatePointer = (event: PointerEvent) => {
+      pointer.current.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.current.y = -((event.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener("pointermove", updatePointer, { passive: true });
+    return () => window.removeEventListener("pointermove", updatePointer);
+  }, []);
+
   return (
     <div className="galaxy-canvas" aria-hidden="true">
       <Canvas
@@ -335,7 +614,7 @@ export default function Scene3D() {
         dpr={[1, 1.4]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <Scene />
+        <Scene pointer={pointer} />
       </Canvas>
     </div>
   );

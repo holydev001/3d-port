@@ -223,8 +223,8 @@ export default function Home() {
         <section className="hero-section dive-section" aria-labelledby="hero-title">
           <div className="dive-content hero-dive-content">
           <div className="hero-kicker reveal">
-            <span>Full-stack developer</span>
-            <span>Digital craftsman</span>
+            <span>David Adams / holydev001</span>
+            <span>Full-stack developer · Nigeria</span>
           </div>
 
           <h1 id="hero-title" className="hero-title">
@@ -234,8 +234,9 @@ export default function Home() {
 
           <div className="hero-lower">
             <p>
-              I translate complex ideas into sharp, useful digital experiences—
-              with code, motion, and just enough cosmic dust.
+              Full-stack developer with 3+ years building modern, scalable web
+              applications end to end—currently shaping analytics and data
+              visualization tools at Emerj LLC.
             </p>
             <a
               href="#work"
@@ -261,21 +262,21 @@ export default function Home() {
             <p>Approach / About</p>
           </div>
           <div className="manifesto-copy">
-            <p className="eyebrow">I don’t decorate interfaces.</p>
+            <p className="eyebrow">Clean architecture. Useful interfaces.</p>
             <h2>
-              I design systems that feel
-              <span> clear, alive, and inevitable.</span>
+              Built for people, with the systems
+              <span> to scale behind them.</span>
             </h2>
             <div className="about-grid">
               <p>
-                I’m David Adams, a full-stack developer working across product
-                thinking, interface engineering, and the details that make
-                digital work memorable.
+                I’m David Adams, a full-stack developer based in Nigeria. I
+                build with JavaScript, TypeScript, React, Next.js, and Node.js,
+                with a focus on clean architecture and predictable APIs.
               </p>
               <p>
-                My sweet spot is the space between structured engineering and
-                expressive design—where performance still matters and every
-                interaction earns its place.
+                I care about performant, user-friendly applications—from
+                thoughtful interfaces and data-rich products to the backend
+                systems that make them reliable.
               </p>
             </div>
           </div>
@@ -350,7 +351,7 @@ export default function Home() {
           <span className="footer-orbit" />
           <div>
             <strong>DAVID ADAMS</strong>
-            <p>Full-stack developer / Lagos, Nigeria</p>
+            <p>Full-stack developer / Nigeria · WAT (UTC+1)</p>
           </div>
         </div>
         <div className="footer-links">

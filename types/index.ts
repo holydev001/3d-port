@@ -1,6 +1,8 @@
 export interface Project {
   slug: string;
   name: string;
+  category: string;
+  year: string;
   shortDescription: string;
   fullDescription: string;
   coverImage: string;
@@ -9,6 +11,16 @@ export interface Project {
   githubUrl?: string;
   liveUrl?: string;
   features: string[];
+}
+
+export interface Experience {
+  company: string;
+  role: string;
+  period: string;
+  location: string;
+  summary: string;
+  highlights: string[];
+  stack: string[];
 }
 
 export interface IconLink {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -17,11 +17,8 @@ import {
   Tag,
 } from "lucide-react";
 
-interface ProjectDetailProps {
-  params: { slug: string };
-}
-
-export default function ProjectDetail({ params }: ProjectDetailProps) {
+export default function ProjectDetail() {
+  const params = useParams<{ slug: string }>();
   const project = projects.find((p) => p.slug === params.slug);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +57,7 @@ export default function ProjectDetail({ params }: ProjectDetailProps) {
       >
         {/* BACK */}
         <Link
-          href="/about"
+          href="/#work"
           className="
             detail-animate inline-flex items-center gap-2 mb-8
             text-white/50
@@ -86,7 +83,7 @@ export default function ProjectDetail({ params }: ProjectDetailProps) {
             </div>
 
             <span className="text-sm text-white/40 font-mono">
-              Project Details
+              {project.category} / {project.year}
             </span>
           </div>
 
@@ -216,7 +213,7 @@ export default function ProjectDetail({ params }: ProjectDetailProps) {
             </Link>
 
             <Link
-              href="/contact"
+              href="/#contact"
               className="
                 flex items-center gap-2 text-white/60
                 hover:text-[#D4A94D]

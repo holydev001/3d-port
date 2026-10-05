@@ -1,233 +1,169 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { notFound, useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
-import CursorGlow from "@/components/cursorGlow";
-import { projects } from "@/lib/data";
+import { useLayoutEffect, useRef } from "react";
+import { notFound, useParams } from "next/navigation";
+import gsap from "gsap";
 import {
   ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
   ExternalLink,
   Github,
-  CheckCircle,
-  Layers,
-  Tag,
+  Orbit,
+  Sparkles,
 } from "lucide-react";
+import CursorGlow from "@/components/cursorGlow";
+import { projects } from "@/lib/data";
+
+const Scene3D = dynamic(() => import("@/components/3d/scene"), { ssr: false });
 
 export default function ProjectDetail() {
   const params = useParams<{ slug: string }>();
-  const project = projects.find((p) => p.slug === params.slug);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const project = projects.find((item) => item.slug === params.slug);
+  const pageRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!project) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const ctx = gsap.context(() => {
+    const context = gsap.context(() => {
       gsap.fromTo(
-        ".detail-animate",
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: "power3.out",
-        }
+        ".project-reveal",
+        { opacity: 0, y: 36, filter: "blur(8px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, stagger: 0.09, ease: "power3.out", delay: 0.08 },
       );
-    }, contentRef);
+    }, pageRef);
 
-    return () => ctx.revert();
+    return () => context.revert();
   }, [project]);
 
-  if (!project) {
-    notFound();
-  }
+  if (!project) notFound();
+
+  const index = projects.findIndex((item) => item.slug === project.slug);
+  const previousProject = projects[(index - 1 + projects.length) % projects.length];
+  const nextProject = projects[(index + 1) % projects.length];
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-black">
+    <div className="project-page">
       <CursorGlow />
-      <Header />
+      <Scene3D />
+      <div className="cosmic-grain" aria-hidden="true" />
 
-      <div
-        ref={contentRef}
-        className="relative w-full max-w-[1000px] mx-auto px-6 md:px-12 pt-28 pb-16 flex-1"
-      >
-        {/* BACK */}
-        <Link
-          href="/#work"
-          className="
-            detail-animate inline-flex items-center gap-2 mb-8
-            text-white/50
-            hover:text-[#D4A94D]
-            transition-colors duration-300
-          "
-        >
-          <ArrowLeft size={18} />
-          Back to Projects
+      <header className="project-nav">
+        <Link className="project-nav__back" href="/#work" data-cursor>
+          <ArrowLeft size={16} />
+          <span>Selected work</span>
         </Link>
+        <Link className="project-nav__brand" href="/" aria-label="Return to holydev home" data-cursor>
+          <span>holy</span>dev
+        </Link>
+        <span className="project-nav__index">Signal {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span>
+      </header>
 
-        {/* HERO */}
-        <div className="detail-animate mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <div
-              className="
-                p-2 rounded-lg
-                border border-[#D4A94D]/20
-                bg-[rgba(212,169,77,0.08)]
-              "
-            >
-              <Layers size={20} className="text-[#D4A94D]" />
-            </div>
-
-            <span className="text-sm text-white/40 font-mono">
-              {project.category} / {project.year}
-            </span>
+      <main ref={pageRef} className="project-content">
+        <section className="project-hero" aria-labelledby="project-title">
+          <div className="project-hero__meta project-reveal">
+            <span><Orbit size={15} /> {project.category}</span>
+            <span>{project.year}</span>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-            {project.name}
-          </h1>
-
-          <p className="text-lg text-white/50 leading-relaxed">
-            {project.fullDescription}
-          </p>
-        </div>
-
-        {/* TAGS */}
-        <div className="detail-animate flex flex-wrap gap-2 mb-10">
-          {project.tags.map((tag) => (
-            <span
-              key={tag}
-              className="
-                flex items-center gap-1 px-3 py-1.5 rounded-full
-                border border-[#D4A94D]/15
-                text-[#D4A94D]/70
-                bg-[rgba(212,169,77,0.05)]
-                text-sm
-              "
-            >
-              <Tag size={12} />
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* LINKS */}
-        <div className="detail-animate flex flex-wrap gap-4 mb-12">
-          {project.githubUrl && (
-            <a
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="
-                flex items-center gap-2 px-6 py-3 rounded-xl
-                border border-[#D4A94D]/20
-                bg-[rgba(212,169,77,0.05)]
-                text-white
-                transition-all duration-300
-                hover:bg-[rgba(212,169,77,0.12)]
-                hover:border-[#D4A94D]/40
-                hover:scale-105
-                hover:shadow-[0_0_20px_rgba(212,169,77,0.12)]
-              "
-            >
-              <Github size={18} />
-              <span className="font-medium">View Code</span>
-            </a>
-          )}
-
-          {project.liveUrl && (
-            <a
-              href={project.liveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="
-                flex items-center gap-2 px-6 py-3 rounded-xl
-                border border-[#D4A94D]/20
-                bg-[rgba(212,169,77,0.05)]
-                text-white
-                transition-all duration-300
-                hover:bg-[rgba(212,169,77,0.12)]
-                hover:border-[#D4A94D]/40
-                hover:scale-105
-                hover:shadow-[0_0_20px_rgba(212,169,77,0.12)]
-              "
-            >
-              <ExternalLink size={18} />
-              <span className="font-medium">Live Demo</span>
-            </a>
-          )}
-        </div>
-
-        {/* FEATURES */}
-        <div className="detail-animate">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
-            <CheckCircle size={22} className="text-[#D4A94D]" />
-            Key Features
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {project.features.map((feature, i) => (
-              <div
-                key={i}
-                className="
-                  flex items-start gap-3 p-4 rounded-xl
-                  border border-[#D4A94D]/10
-                  bg-[rgba(212,169,77,0.04)]
-                  hover:border-[#D4A94D]/25
-                  transition-all duration-300
-                "
-              >
-                <div className="mt-0.5 min-w-[20px]">
-                  <div
-                    className="
-                      h-5 w-5 rounded-full
-                      bg-[rgba(212,169,77,0.15)]
-                      border border-[#D4A94D]/30
-                      flex items-center justify-center
-                    "
-                  >
-                    <span className="text-[10px] text-[#D4A94D] font-bold">
-                      {i + 1}
-                    </span>
-                  </div>
-                </div>
-
-                <span className="text-white/70">{feature}</span>
+          <div className="project-hero__grid">
+            <div>
+              <p className="project-kicker project-reveal">Transmission / {String(index + 1).padStart(2, "0")}</p>
+              <h1 id="project-title" className="project-title project-reveal">{project.name}</h1>
+            </div>
+            <div className="project-hero__summary project-reveal">
+              <p>{project.fullDescription}</p>
+              <div className="project-actions">
+                {project.liveUrl && (
+                  <a href={project.liveUrl} target="_blank" rel="noreferrer" className="project-action project-action--primary" data-cursor>
+                    {project.slug === "kairo" ? "Download release" : "Launch project"}
+                    <ArrowUpRight size={17} />
+                  </a>
+                )}
+                {project.githubUrl && (
+                  <a href={project.githubUrl} target="_blank" rel="noreferrer" className="project-action" data-cursor>
+                    <Github size={17} />
+                    Source
+                  </a>
+                )}
               </div>
+            </div>
+          </div>
+
+          <div className="project-orbit project-reveal" aria-hidden="true">
+            <span className="project-orbit__ring project-orbit__ring--one" />
+            <span className="project-orbit__ring project-orbit__ring--two" />
+            <span className="project-orbit__core"><Sparkles size={20} /></span>
+            <span className="project-orbit__caption">Mission payload</span>
+          </div>
+        </section>
+
+        <section className="project-specs" aria-label="Project specifications">
+          <div className="project-section-label project-reveal">
+            <span>01</span>
+            <p>System profile</p>
+          </div>
+          <div className="project-stack project-reveal">
+            <p>Built with</p>
+            <div>
+              {project.tags.map((tag, tagIndex) => (
+                <span key={tag}><b>{String(tagIndex + 1).padStart(2, "0")}</b>{tag}</span>
+              ))}
+            </div>
+          </div>
+          <div className="project-stats project-reveal">
+            <div><small>Category</small><strong>{project.category}</strong></div>
+            <div><small>Release</small><strong>{project.year}</strong></div>
+            <div><small>Modules</small><strong>{String(project.features.length).padStart(2, "0")}</strong></div>
+          </div>
+        </section>
+
+        <section className="project-features" aria-labelledby="features-title">
+          <div className="project-features__head">
+            <div className="project-section-label project-reveal">
+              <span>02</span>
+              <p>Mission modules</p>
+            </div>
+            <h2 id="features-title" className="project-reveal">What it was <em>built</em> to do.</h2>
+          </div>
+          <div className="feature-grid">
+            {project.features.map((feature, featureIndex) => (
+              <article className="feature-card project-reveal" key={feature}>
+                <span className="feature-card__number">{String(featureIndex + 1).padStart(2, "0")}</span>
+                <Check size={18} />
+                <p>{feature}</p>
+              </article>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* NAVIGATION */}
-        <div className="detail-animate mt-16 pt-8 border-t border-white/10">
-          <div className="flex justify-between items-center">
-            <Link
-              href="/about/all-projects"
-              className="text-white/40 hover:text-[#D4A94D] transition-colors text-sm"
-            >
-              View All Projects
-            </Link>
-
-            <Link
-              href="/#contact"
-              className="
-                flex items-center gap-2 text-white/60
-                hover:text-[#D4A94D]
-                transition-colors text-sm
-              "
-            >
-              Get in Touch
-              <ExternalLink size={14} />
-            </Link>
+        <section className="project-outro project-reveal">
+          <div>
+            <p>Want to build something with gravity?</p>
+            <a href="mailto:davebenaaa@gmail.com" data-cursor>
+              Start a conversation <ExternalLink size={18} />
+            </a>
           </div>
-        </div>
-      </div>
+          <Link href="/#work" className="project-outro__return" data-cursor>
+            Back to transmissions <ArrowUpRight size={18} />
+          </Link>
+        </section>
+      </main>
 
-      <Footer />
+      <footer className="project-footer">
+        <Link href={`/about/${previousProject.slug}`} className="project-switcher" data-cursor>
+          <ArrowLeft size={18} />
+          <span><small>Previous signal</small>{previousProject.name}</span>
+        </Link>
+        <Link href={`/about/${nextProject.slug}`} className="project-switcher project-switcher--next" data-cursor>
+          <span><small>Next signal</small>{nextProject.name}</span>
+          <ArrowRight size={18} />
+        </Link>
+      </footer>
     </div>
   );
 }

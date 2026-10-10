@@ -12,13 +12,14 @@ import {
   Mail,
   Twitter,
 } from "lucide-react";
-import { projects, techStack } from "@/lib/data";
+import { experiences, projects, techStack } from "@/lib/data";
 
 const Scene3D = dynamic(() => import("@/components/3d/scene"), { ssr: false });
 
 const navItems = [
   ["Index", "#top"],
   ["About", "#about"],
+  ["Experience", "#experience"],
   ["Work", "#work"],
   ["Contact", "#contact"],
 ];
@@ -50,7 +51,7 @@ export default function Home() {
         const content = section.querySelector(".dive-content");
         if (!content) return;
         const items = section.querySelectorAll<HTMLElement>(
-          ".hero-kicker, .hero-title, .hero-lower, .hero-index, .section-label, .eyebrow, h2, .about-grid > *, .project-row, .stack-cloud > *, .contact-stars, .contact-link",
+          ".hero-kicker, .hero-title, .hero-lower, .hero-index, .section-label, .eyebrow, h2, .about-grid > *, .experience-row, .project-row, .stack-cloud > *, .contact-stars, .contact-link",
         );
 
         const timeline = gsap.timeline({
@@ -184,17 +185,11 @@ export default function Home() {
           aria-label="Back to top"
           onClick={(event) => navigateTo(event, "#top")}
         >
-          <span>H</span>
           <div>
-            <strong>HOLY.DEV</strong>
+            <strong><span>holy</span>dev</strong>
             <small>Creative orbit / 2026</small>
           </div>
         </a>
-
-        <div className="nav-status">
-          <i />
-          Available for select projects
-        </div>
 
         <button
           className={`menu-trigger ${menuOpen ? "is-open" : ""}`}
@@ -218,6 +213,21 @@ export default function Home() {
           ))}
         </nav>
       </header>
+
+      <nav className="orbit-nav" aria-label="Section navigation">
+        <span className="orbit-nav__axis" aria-hidden="true" />
+        {navItems.map(([label, href], index) => (
+          <a
+            key={href}
+            href={href}
+            onClick={(event) => navigateTo(event, href)}
+            aria-label={`Go to ${label}`}
+          >
+            <span className="orbit-nav__label">{label}</span>
+            <span className="orbit-nav__node"><i />{String(index + 1).padStart(2, "0")}</span>
+          </a>
+        ))}
+      </nav>
 
       <main>
         <section className="hero-section dive-section" aria-labelledby="hero-title">
@@ -283,11 +293,48 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="experience-section dive-section" id="experience">
+          <div className="dive-content">
+            <div className="section-heading experience-heading">
+              <div className="section-label">
+                <span>02</span>
+                <p>Flight record / Experience</p>
+              </div>
+              <div>
+                <p className="eyebrow">3+ years in production</p>
+                <h2>Making products move.</h2>
+              </div>
+            </div>
+
+            <div className="experience-list">
+              {experiences.map((experience, index) => (
+                <article className="experience-row" key={experience.company}>
+                  <span className="experience-number">{String(index + 1).padStart(2, "0")}</span>
+                  <div className="experience-title">
+                    <p>{experience.period} <i>·</i> {experience.location}</p>
+                    <h3>{experience.company}</h3>
+                    <strong>{experience.role}</strong>
+                  </div>
+                  <div className="experience-detail">
+                    <p>{experience.summary}</p>
+                    <ul>
+                      {experience.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+                    </ul>
+                    <div className="experience-stack">
+                      {experience.stack.map((item) => <span key={item}>{item}</span>)}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="work-section dive-section" id="work">
           <div className="dive-content">
           <div className="section-heading">
             <div className="section-label">
-              <span>02</span>
+              <span>03</span>
               <p>Selected transmissions</p>
             </div>
             <h2>Work in orbit.</h2>
@@ -317,7 +364,7 @@ export default function Home() {
         <section className="capabilities-section dive-section">
           <div className="dive-content section-dive-grid">
           <div className="section-label">
-            <span>03</span>
+            <span>04</span>
             <p>Capabilities / Stack</p>
           </div>
           <div className="capabilities-layout">

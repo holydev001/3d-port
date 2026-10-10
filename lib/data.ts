@@ -1,9 +1,11 @@
-import { Project, TechItem } from "@/types";
+import { Experience, Project, TechItem } from "@/types";
 
 export const projects: Project[] = [
   {
     slug: "visual-query-builder",
     name: "Visual Query Builder",
+    category: "Developer Tool",
+    year: "2025",
     shortDescription: "A drag-and-drop SQL query builder for accessible data exploration.",
     fullDescription: "An interactive visual SQL query builder that lets people compose complex queries without memorising syntax, while still generating production-ready queries under the hood.",
     coverImage: "/projects/querycraft.jpg",
@@ -21,6 +23,8 @@ export const projects: Project[] = [
   {
     slug: "objekt-404",
     name: "OBJEKT//404",
+    category: "Interactive Experience",
+    year: "2025",
     shortDescription: "A cinematic, interactive 3D artifact from an unrendered future.",
     fullDescription: "An experimental 3D web artifact designed as a love letter to brutalist web design and real-time 3D. Drag, scroll, and hover to manipulate the broadcast.",
     coverImage: "/projects/objekt-404.jpg",
@@ -38,6 +42,8 @@ export const projects: Project[] = [
   {
     slug: "kairo",
     name: "Kairo",
+    category: "Desktop Application",
+    year: "2026",
     shortDescription: "A local-first personal command center for reflection and direction.",
     fullDescription: "A desktop journal and personal command center built around Kaizen. It helps you set intentions, keep commitments, reflect each evening, and review your direction each week—entirely on your device.",
     coverImage: "/projects/kairo.jpg",
@@ -55,6 +61,8 @@ export const projects: Project[] = [
   {
     slug: "blueprint-portfolio",
     name: "Blueprint Portfolio",
+    category: "Portfolio Variation",
+    year: "2026",
     shortDescription: "A motion-led portfolio variation built on a cool blueprint grid.",
     fullDescription: "A responsive portfolio exploration using a cool-toned blueprint grid, kinetic interface details, and crisp, motion-led transitions.",
     coverImage: "/projects/blueprint-portfolio.jpg",
@@ -72,6 +80,8 @@ export const projects: Project[] = [
   {
     slug: "3d-portfolio",
     name: "3D Portfolio",
+    category: "Portfolio Variation",
+    year: "2026",
     shortDescription: "An immersive cosmic portfolio powered by interactive Three.js scenes.",
     fullDescription: "An immersive cosmic portfolio variation with an interactive Three.js hero, particle systems, orbiting geometry, and GSAP-powered motion.",
     coverImage: "/projects/3d-portfolio.jpg",
@@ -85,6 +95,58 @@ export const projects: Project[] = [
       "Orbiting geometry",
       "GSAP-powered motion"
     ]
+  }
+];
+
+export const experiences: Experience[] = [
+  {
+    company: "Emerj LLC",
+    role: "Lead Frontend Developer",
+    period: "2025 — Present",
+    location: "Remote",
+    summary: "Shaping admin analytics and data-visualization tools for a product team that needs fast, useful decisions from complex platform data.",
+    highlights: [
+      "Built an analytics dashboard for activity, usage trends, and platform performance.",
+      "Integrated backend APIs for real-time and historical visualizations.",
+      "Led code reviews, sprint planning, and iterative product delivery."
+    ],
+    stack: ["Next.js", "TypeScript", "Tailwind", "REST"]
+  },
+  {
+    company: "Nexus Haven",
+    role: "Full-stack Engineer",
+    period: "2026",
+    location: "Remote",
+    summary: "Built an immersive, scroll-driven launch experience and the waitlist systems behind a VR meetings platform.",
+    highlights: [
+      "Optimized particle buffers, device pixel ratio, and 3D asset loading for smooth rendering.",
+      "Developed an asynchronous FastAPI waitlist service with MongoDB indexing and pooling."
+    ],
+    stack: ["Three.js", "FastAPI", "MongoDB", "GSAP"]
+  },
+  {
+    company: "Content Q",
+    role: "Web Developer",
+    period: "2025",
+    location: "Remote",
+    summary: "Led the frontend delivery of a production marketing site designed to be quick, discoverable, and easy to maintain.",
+    highlights: [
+      "Built responsive, SEO-aware landing pages in Next.js.",
+      "Coordinated frontend milestones and dependable waitlist synchronisation."
+    ],
+    stack: ["Next.js", "React", "Tailwind", "SEO"]
+  },
+  {
+    company: "HNG",
+    role: "Intern / Junior Developer",
+    period: "2025",
+    location: "Remote",
+    summary: "Collaborated in a fast-moving, cross-functional environment using practical product and pull-request workflows.",
+    highlights: [
+      "Contributed features and fixes through an agile team process.",
+      "Strengthened collaborative Git and review practices."
+    ],
+    stack: ["React", "Git", "Agile"]
   }
 ];
 
